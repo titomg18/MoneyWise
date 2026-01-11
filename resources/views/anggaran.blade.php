@@ -395,6 +395,97 @@
         </div>
     </div>
 
+    <!-- Modal Edit Anggaran -->
+    <div id="modalEditAnggaran" class="fixed inset-0 bg-gray-800 bg-opacity-50 z-30 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-lg font-bold text-gray-800">Edit Anggaran</h3>
+                    <button id="tutupModalEdit" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="formEditAnggaran" method="POST">
+                    @csrf
+                    @method('PUT')
+                    <input type="hidden" id="edit_budget_id" name="id">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="edit_category_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Kategori *</label>
+                            <input type="text" id="edit_category_name" name="category_name" 
+                                   class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                   placeholder="Contoh: Makan & Minum, Transportasi" required>
+                            <p class="text-xs text-gray-500 mt-1">Nama kategori untuk anggaran Anda</p>
+                        </div>
+                        
+                        <div>
+                            <label for="edit_amount" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Anggaran *</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500">Rp</span>
+                                </div>
+                                <input type="number" id="edit_amount" name="amount" 
+                                       class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                       placeholder="0" min="0" step="1000" required>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Jumlah anggaran untuk kategori ini</p>
+                        </div>
+                        
+                        <div>
+                            <label for="edit_period" class="block text-sm font-medium text-gray-700 mb-1">Periode *</label>
+                            <select id="edit_period" name="period" 
+                                    class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                <option value="Bulanan">Bulanan</option>
+                                <option value="Mingguan">Mingguan</option>
+                                <option value="Tahunan">Tahunan</option>
+                                <option value="Custom">Custom</option>
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Periode anggaran</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Warna Kategori *</label>
+                            <div class="flex space-x-2">
+                                @foreach($colors as $color)
+                                <div class="flex flex-col items-center">
+                                    <input type="radio" id="edit_color_{{ $color['id'] }}" name="color" value="{{ $color['value'] }}" 
+                                           class="hidden">
+                                    <label for="edit_color_{{ $color['id'] }}" 
+                                           class="w-8 h-8 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform"
+                                           style="background-color: {{ $color['value'] }}"
+                                           title="{{ $color['label'] }}"></label>
+                                </div>
+                                @endforeach
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">Pilih warna untuk kategori ini</p>
+                        </div>
+                        
+                        <div>
+                            <label for="edit_description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi (Opsional)</label>
+                            <textarea id="edit_description" name="description" 
+                                      class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                      rows="3" placeholder="Tambahkan catatan untuk anggaran ini"></textarea>
+                            <p class="text-xs text-gray-500 mt-1">Deskripsi atau catatan tambahan</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                        <button type="button" id="batalEdit" 
+                                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+                            Batal
+                        </button>
+                        <button type="submit" id="submitEditButton"
+                                class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all flex items-center">
+                            <i class="fas fa-save mr-2"></i>
+                            <span>Update Anggaran</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Mobile Menu (Hidden by default) -->
     <div id="mobileMenu" class="lg:hidden fixed inset-0 bg-gray-800 bg-opacity-50 z-20 hidden">
         <div class="absolute right-0 top-0 h-full w-64 bg-gradient-to-b from-blue-800 to-indigo-900 text-white shadow-xl">
@@ -679,7 +770,7 @@
             document.querySelectorAll('.edit-budget').forEach(button => {
                 button.addEventListener('click', function() {
                     const budgetId = this.getAttribute('data-id');
-                    editBudget(budgetId);
+                    openEditModal(budgetId);
                 });
             });
             
@@ -834,7 +925,99 @@
         }
 
         // ============================================
-        // FUNGSI CRUD ANGGARAN
+        // FUNGSI EDIT ANGGARAN
+        // ============================================
+
+        // Buka modal edit dengan data anggaran
+        async function openEditModal(budgetId) {
+            try {
+                const response = await fetch(`/budget/${budgetId}/edit`);
+                
+                if (!response.ok) {
+                    throw new Error('Gagal mengambil data anggaran');
+                }
+                
+                const budget = await response.json();
+                
+                // Isi form edit dengan data anggaran
+                document.getElementById('edit_budget_id').value = budget.id;
+                document.getElementById('edit_category_name').value = budget.category_name;
+                document.getElementById('edit_amount').value = budget.amount;
+                document.getElementById('edit_period').value = budget.period;
+                document.getElementById('edit_description').value = budget.description || '';
+                
+                // Set warna yang dipilih
+                const colorRadios = document.querySelectorAll('#formEditAnggaran input[name="color"]');
+                colorRadios.forEach(radio => {
+                    radio.checked = (radio.value === budget.color);
+                });
+                
+                // Set action form
+                document.getElementById('formEditAnggaran').action = `/budget/${budgetId}`;
+                
+                // Tampilkan modal edit
+                document.getElementById('modalEditAnggaran').classList.remove('hidden');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('Gagal memuat data anggaran untuk diedit', 'error');
+            }
+        }
+
+        // Update anggaran
+        async function updateAnggaran(formData, budgetId) {
+            try {
+                const submitButton = document.getElementById('submitEditButton');
+                const originalText = submitButton.innerHTML;
+                
+                // Tampilkan loading state
+                submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menyimpan...';
+                submitButton.disabled = true;
+                
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                
+                // Tambahkan _method PUT untuk Laravel
+                formData.append('_method', 'PUT');
+                
+                const response = await fetch(`/budget/${budgetId}`, {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showNotification(result.message || 'Anggaran berhasil diperbarui!', 'success');
+                    
+                    // Tutup modal edit
+                    document.getElementById('modalEditAnggaran').classList.add('hidden');
+                    
+                    // Refresh data
+                    setTimeout(() => {
+                        loadBudgets();
+                    }, 500);
+                    
+                } else {
+                    throw new Error(result.message || 'Terjadi kesalahan saat memperbarui anggaran');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification(error.message || 'Terjadi kesalahan jaringan', 'error');
+            } finally {
+                // Kembalikan state tombol
+                const submitButton = document.getElementById('submitEditButton');
+                submitButton.innerHTML = '<i class="fas fa-save mr-2"></i><span>Update Anggaran</span>';
+                submitButton.disabled = false;
+            }
+        }
+
+        // ============================================
+        // FUNGSI CRUD ANGGARAN LAINNYA
         // ============================================
 
         // Tambah anggaran
@@ -885,23 +1068,6 @@
                 const submitButton = document.getElementById('submitButton');
                 submitButton.innerHTML = '<i class="fas fa-save mr-2"></i><span>Simpan Anggaran</span>';
                 submitButton.disabled = false;
-            }
-        }
-
-        // Edit anggaran
-        async function editBudget(budgetId) {
-            try {
-                const response = await fetch(`/budget/${budgetId}/edit`);
-                
-                if (response.ok) {
-                    // Redirect ke halaman edit
-                    window.location.href = `/budget/${budgetId}/edit`;
-                } else {
-                    showNotification('Gagal membuka halaman edit', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showNotification('Terjadi kesalahan', 'error');
             }
         }
 
@@ -992,7 +1158,9 @@
 
         // DOM Elements
         const modalTambahAnggaran = document.getElementById('modalTambahAnggaran');
+        const modalEditAnggaran = document.getElementById('modalEditAnggaran');
         const formTambahAnggaran = document.getElementById('formTambahAnggaran');
+        const formEditAnggaran = document.getElementById('formEditAnggaran');
         const mobileMenu = document.getElementById('mobileMenu');
 
         // Mobile menu toggle
@@ -1023,13 +1191,22 @@
             });
         });
 
-        // Modal tutup dan batal
+        // Modal tutup dan batal - Tambah
         document.getElementById('tutupModal')?.addEventListener('click', () => {
             modalTambahAnggaran.classList.add('hidden');
         });
 
         document.getElementById('batalTambah')?.addEventListener('click', () => {
             modalTambahAnggaran.classList.add('hidden');
+        });
+
+        // Modal tutup dan batal - Edit
+        document.getElementById('tutupModalEdit')?.addEventListener('click', () => {
+            modalEditAnggaran.classList.add('hidden');
+        });
+
+        document.getElementById('batalEdit')?.addEventListener('click', () => {
+            modalEditAnggaran.classList.add('hidden');
         });
 
         // Tutup modal saat klik di luar
@@ -1039,11 +1216,25 @@
             }
         });
 
-        // Form submission
+        modalEditAnggaran?.addEventListener('click', (e) => {
+            if (e.target.id === 'modalEditAnggaran') {
+                modalEditAnggaran.classList.add('hidden');
+            }
+        });
+
+        // Form submission - Tambah
         formTambahAnggaran?.addEventListener('submit', (e) => {
             e.preventDefault();
             const formData = new FormData(formTambahAnggaran);
             tambahAnggaran(formData);
+        });
+
+        // Form submission - Edit
+        formEditAnggaran?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const budgetId = document.getElementById('edit_budget_id').value;
+            const formData = new FormData(formEditAnggaran);
+            updateAnggaran(formData, budgetId);
         });
 
         // ============================================

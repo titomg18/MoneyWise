@@ -81,10 +81,10 @@ class BudgetController extends Controller
     {
         // Pastikan user hanya bisa mengedit anggaran miliknya sendiri
         if ($budget->user_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
         
-        return view('budget.edit', compact('budget'));
+        return response()->json($budget);
     }
 
     /**
@@ -94,7 +94,7 @@ class BudgetController extends Controller
     {
         // Pastikan user hanya bisa mengupdate anggaran miliknya sendiri
         if ($budget->user_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $request->validate([
@@ -107,8 +107,11 @@ class BudgetController extends Controller
 
         $budget->update($request->all());
 
-        return redirect()->route('budget.index')
-            ->with('success', 'Anggaran berhasil diperbarui!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Anggaran berhasil diperbarui!',
+            'budget' => $budget
+        ]);
     }
 
     /**
@@ -118,7 +121,7 @@ class BudgetController extends Controller
     {
         // Pastikan user hanya bisa menghapus anggaran miliknya sendiri
         if ($budget->user_id !== Auth::id()) {
-            abort(403, 'Unauthorized action.');
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
         
         $budget->delete();
