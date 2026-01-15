@@ -9,20 +9,18 @@ class Transaction extends Model
 {
     use HasFactory;
 
-    // Tentukan primary key
     protected $primaryKey = 'transaction_id';
-
-    // Tentukan field yang bisa diisi
+    
     protected $fillable = [
         'user_id',
         'category_id',
+        'budget_id', // Tambahkan ini
         'amount',
         'transaction_type',
         'transaction_date',
         'description'
     ];
 
-    // Cast tipe data
     protected $casts = [
         'transaction_date' => 'date',
         'amount' => 'decimal:2'
@@ -38,6 +36,12 @@ class Transaction extends Model
     public function category()
     {
         return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    // Relasi ke Budget (BARU)
+    public function budget()
+    {
+        return $this->belongsTo(Budget::class, 'budget_id');
     }
 
     // Scope untuk pemasukan
@@ -64,5 +68,5 @@ class Transaction extends Model
     {
         $prefix = $this->transaction_type == 'income' ? '+' : '-';
         return $prefix . ' Rp ' . number_format($this->amount, 0, ',', '.');
-    }
+    }    
 }

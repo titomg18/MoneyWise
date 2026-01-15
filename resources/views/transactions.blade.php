@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@800;900&display=swap" rel="stylesheet">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -154,7 +155,7 @@
                             <i class="fas fa-filter text-gray-500 mr-2"></i>
                             <span>Filter</span>
                         </button>
-                        <button id="addTransactionButton" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all flex items-center justify-center w-full sm:w-auto">
+                        <button onclick="showAddTransactionModal()" class="bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all flex items-center justify-center w-full sm:w-auto">
                             <i class="fas fa-plus mr-2"></i> Transaksi Baru
                         </button>
                     </div>
@@ -212,6 +213,17 @@
                 <div class="flex items-center">
                     <i class="fas fa-check-circle mr-2"></i>
                     <span class="text-sm lg:text-base">{{ session('success') }}</span>
+                </div>
+            </div>
+        </div>
+        @endif
+
+        @if(session('error'))
+        <div class="mx-4 lg:mx-6 mt-6">
+            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span class="text-sm lg:text-base">{{ session('error') }}</span>
                 </div>
             </div>
         </div>
@@ -307,6 +319,7 @@
                                 <th class="pb-3 font-medium">Tanggal</th>
                                 <th class="pb-3 font-medium">Deskripsi</th>
                                 <th class="pb-3 font-medium">Kategori</th>
+                                <th class="pb-3 font-medium">Anggaran</th>
                                 <th class="pb-3 font-medium">Jenis</th>
                                 <th class="pb-3 font-medium">Jumlah</th>
                                 <th class="pb-3 font-medium">Aksi</th>
@@ -334,6 +347,18 @@
                                     <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 lg:px-3 py-1 rounded-full">
                                         {{ $transaction->category->category_name ?? 'Tidak ada kategori' }}
                                     </span>
+                                </td>
+
+                                <!-- Anggaran (Responsif) -->
+                                <td class="py-3 lg:py-4" data-label="Anggaran">
+                                    @if($transaction->budget)
+                                    <div class="flex items-center">
+                                        <div class="w-2 h-2 rounded-full mr-2" style="background-color: {{ $transaction->budget->color }}"></div>
+                                        <span class="text-xs text-gray-700">{{ $transaction->budget->category_name }}</span>
+                                    </div>
+                                    @else
+                                    <span class="text-xs text-gray-400">Tidak ada anggaran</span>
+                                    @endif
                                 </td>
                                 
                                 <!-- Jenis (Responsif) -->
@@ -376,7 +401,7 @@
                             </tr>
                             @empty
                             <tr>
-                                <td colspan="6" class="py-8 text-center text-gray-500">
+                                <td colspan="7" class="py-8 text-center text-gray-500">
                                     <div class="flex flex-col items-center">
                                         <i class="fas fa-exchange-alt text-3xl lg:text-4xl text-gray-300 mb-4"></i>
                                         <p class="text-base lg:text-lg">Belum ada transaksi</p>
@@ -435,7 +460,7 @@
         <!-- Footer -->
         <footer class="bg-white border-t mt-6 lg:mt-8 p-4 lg:p-6">
             <div class="text-center text-gray-500 text-xs lg:text-sm">
-                <p>&copy; 2023 MoneyWise. Aplikasi manajemen keuangan pribadi.</p>
+                <p>&copy; {{ date('Y') }} MoneyWise. Aplikasi manajemen keuangan pribadi.</p>
                 <p class="mt-2">Dibuat dengan <i class="fas fa-heart text-red-400 mx-1"></i> untuk pengelolaan keuangan yang lebih bijak</p>
             </div>
         </footer>
@@ -528,20 +553,21 @@
                 <form id="transactionForm" action="{{ route('transactions.store') }}" method="POST">
                     @csrf
                     <input type="hidden" id="transaction_id" name="transaction_id">
+                    <input type="hidden" id="_method" name="_method" value="POST">
                     
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Jenis Transaksi</label>
                             <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0">
                                 <label class="flex items-center">
-                                    <input type="radio" name="transaction_type" value="income" class="mr-2" id="type_income" checked>
+                                    <input type="radio" name="transaction_type" value="income" class="mr-2" id="type_income" checked onchange="updateBudgetOptions()">
                                     <span class="flex items-center text-sm lg:text-base">
                                         <i class="fas fa-arrow-down text-green-500 mr-1"></i>
                                         Pemasukan
                                     </span>
                                 </label>
                                 <label class="flex items-center">
-                                    <input type="radio" name="transaction_type" value="expense" class="mr-2" id="type_expense">
+                                    <input type="radio" name="transaction_type" value="expense" class="mr-2" id="type_expense" onchange="updateBudgetOptions()">
                                     <span class="flex items-center text-sm lg:text-base">
                                         <i class="fas fa-arrow-up text-red-500 mr-1"></i>
                                         Pengeluaran
@@ -570,7 +596,7 @@
                             <div class="flex-1">
                                 <label class="block text-sm font-medium text-gray-700 mb-1">Kategori *</label>
                                 <select name="category_id" id="category_id" 
-                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm lg:text-base" required>
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm lg:text-base" required onchange="updateBudgetOptions()">
                                     <option value="">Pilih Kategori</option>
                                     @foreach($categories as $category)
                                     <option value="{{ $category->category_id }}" data-type="{{ $category->type }}">
@@ -584,6 +610,17 @@
                                     class="px-3 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700">
                                 <i class="fas fa-plus"></i>
                             </button>
+                        </div>
+
+                        <!-- Budget Selection -->
+                        <div id="budgetSection" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Pilih Anggaran (Opsional)</label>
+                            <select name="budget_id" id="budget_id" 
+                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm lg:text-base">
+                                <option value="">Tidak ada anggaran</option>
+                                <!-- Budget options will be populated by JavaScript -->
+                            </select>
+                            <p class="text-xs text-gray-500 mt-1">Pilih anggaran untuk mengaitkan transaksi ini</p>
                         </div>
                         
                         <div>
@@ -605,7 +642,7 @@
                         </button>
                         <button type="submit" id="submitButton" 
                                 class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 text-sm lg:text-base w-full sm:w-auto order-1 sm:order-2">
-                            Simpan Transaksi
+                            <span id="submitButtonText">Simpan Transaksi</span>
                         </button>
                     </div>
                 </form>
@@ -661,7 +698,7 @@
                                 class="px-4 py-2 border border-gray-300 rounded-xl hover:bg-gray-50 text-sm lg:text-base w-full sm:w-auto order-2 sm:order-1">
                             Batal
                         </button>
-                        <button type="submit" 
+                        <button type="submit" id="submitCategoryButton"
                                 class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 text-sm lg:text-base w-full sm:w-auto order-1 sm:order-2">
                             Simpan Kategori
                         </button>
@@ -715,22 +752,98 @@
             });
         }
 
+        // Variables
+        let budgets = [];
+
+        // Fetch budgets on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchBudgets();
+        });
+
+        // Fetch budgets from API
+        async function fetchBudgets() {
+            try {
+                const response = await fetch('{{ route("budget.data") }}');
+                if (response.ok) {
+                    const data = await response.json();
+                    budgets = data.budgets || [];
+                }
+            } catch (error) {
+                console.error('Error fetching budgets:', error);
+            }
+        }
+
+        // Update budget options based on selected category and transaction type
+        function updateBudgetOptions() {
+            const transactionType = document.querySelector('input[name="transaction_type"]:checked').value;
+            const categorySelect = document.getElementById('category_id');
+            const selectedCategoryId = categorySelect.value;
+            const budgetSection = document.getElementById('budgetSection');
+            const budgetSelect = document.getElementById('budget_id');
+            
+            // Clear existing options except the first one
+            while (budgetSelect.options.length > 1) {
+                budgetSelect.remove(1);
+            }
+            
+            // Only show budget section for expense transactions
+            if (transactionType === 'expense' && selectedCategoryId) {
+                budgetSection.classList.remove('hidden');
+                
+                // Get selected category name
+                const selectedOption = categorySelect.options[categorySelect.selectedIndex];
+                const categoryName = selectedOption.text;
+                
+                // Filter budgets by category name (matching logic)
+                const matchingBudgets = budgets.filter(budget => 
+                    budget.category_name.toLowerCase().includes(categoryName.toLowerCase()) ||
+                    categoryName.toLowerCase().includes(budget.category_name.toLowerCase())
+                );
+                
+                // Add budget options
+                matchingBudgets.forEach(budget => {
+                    const option = document.createElement('option');
+                    option.value = budget.id;
+                    option.textContent = `${budget.category_name} (Rp ${budget.amount.toLocaleString('id-ID')})`;
+                    option.dataset.remaining = budget.remaining;
+                    budgetSelect.appendChild(option);
+                });
+                
+                // If no matching budgets, show message
+                if (matchingBudgets.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'Tidak ada anggaran untuk kategori ini';
+                    option.disabled = true;
+                    budgetSelect.appendChild(option);
+                }
+            } else {
+                budgetSection.classList.add('hidden');
+                budgetSelect.value = '';
+            }
+        }
+
         // Transaction modal functions
         function showAddTransactionModal() {
             document.getElementById('modalTitle').textContent = 'Tambah Transaksi Baru';
             document.getElementById('transactionForm').action = "{{ route('transactions.store') }}";
             document.getElementById('transaction_id').value = '';
+            document.getElementById('_method').value = 'POST';
             document.getElementById('transaction_date').value = '{{ date('Y-m-d') }}';
             document.getElementById('description').value = '';
             document.getElementById('category_id').value = '';
+            document.getElementById('budget_id').value = '';
             document.getElementById('amount').value = '';
             document.getElementById('type_income').checked = true;
-            document.getElementById('submitButton').textContent = 'Simpan Transaksi';
+            document.getElementById('submitButtonText').textContent = 'Simpan Transaksi';
             
             // Reset errors
             document.querySelectorAll('.text-red-500').forEach(el => {
                 el.classList.add('hidden');
             });
+            
+            // Reset budget section
+            document.getElementById('budgetSection').classList.add('hidden');
             
             document.getElementById('transactionModal').classList.remove('hidden');
         }
@@ -746,6 +859,7 @@
                     document.getElementById('modalTitle').textContent = 'Edit Transaksi';
                     document.getElementById('transactionForm').action = `/transactions/${id}`;
                     document.getElementById('transaction_id').value = id;
+                    document.getElementById('_method').value = 'PUT';
                     document.getElementById('transaction_date').value = data.transaction_date;
                     document.getElementById('description').value = data.description;
                     document.getElementById('category_id').value = data.category_id;
@@ -757,15 +871,17 @@
                         document.getElementById('type_expense').checked = true;
                     }
                     
-                    document.getElementById('submitButton').textContent = 'Perbarui Transaksi';
+                    document.getElementById('submitButtonText').textContent = 'Perbarui Transaksi';
                     
-                    // Update form method to PUT
-                    const form = document.getElementById('transactionForm');
-                    const methodInput = document.createElement('input');
-                    methodInput.type = 'hidden';
-                    methodInput.name = '_method';
-                    methodInput.value = 'PUT';
-                    form.appendChild(methodInput);
+                    // Trigger budget options update
+                    setTimeout(() => {
+                        updateBudgetOptions();
+                        // Set selected budget if exists
+                        if (data.budget_id) {
+                            document.getElementById('budget_id').value = data.budget_id;
+                            document.getElementById('budgetSection').classList.remove('hidden');
+                        }
+                    }, 100);
                     
                     document.getElementById('transactionModal').classList.remove('hidden');
                 })
@@ -787,24 +903,7 @@
         // Filter categories by transaction type
         document.querySelectorAll('input[name="transaction_type"]').forEach(radio => {
             radio.addEventListener('change', function() {
-                const selectedType = this.value;
-                const categorySelect = document.getElementById('category_id');
-                const options = categorySelect.options;
-                
-                // Show all options first
-                for (let i = 0; i < options.length; i++) {
-                    options[i].style.display = '';
-                }
-                
-                // Hide options that don't match the selected type
-                if (selectedType) {
-                    for (let i = 1; i < options.length; i++) {
-                        const optionType = options[i].getAttribute('data-type');
-                        if (optionType !== selectedType) {
-                            options[i].style.display = 'none';
-                        }
-                    }
-                }
+                updateBudgetOptions();
             });
         });
 
@@ -827,6 +926,12 @@
                 const description = this.getAttribute('data-description');
                 
                 if (confirm(`Apakah Anda yakin ingin menghapus transaksi "${description}"?`)) {
+                    // Show loading state
+                    const deleteBtn = this.querySelector('button[type="submit"]');
+                    const originalHtml = deleteBtn.innerHTML;
+                    deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    deleteBtn.disabled = true;
+                    
                     this.submit();
                 }
             });
@@ -850,6 +955,13 @@
                     document.getElementById('category_id').value = '{{ old("category_id") }}';
                 @endif
                 
+                @if(old('budget_id'))
+                    setTimeout(() => {
+                        document.getElementById('budget_id').value = '{{ old("budget_id") }}';
+                        updateBudgetOptions();
+                    }, 100);
+                @endif
+                
                 @if(old('amount'))
                     document.getElementById('amount').value = '{{ old("amount") }}';
                 @endif
@@ -859,11 +971,29 @@
                 @elseif(old('transaction_type') == 'expense')
                     document.getElementById('type_expense').checked = true;
                 @endif
+                
+                // Update budget options
+                setTimeout(updateBudgetOptions, 200);
             });
         @endif
 
-        // Show add transaction modal on button click
-        document.getElementById('addTransactionButton')?.addEventListener('click', showAddTransactionModal);
+        // Category form submission with loading state
+        document.getElementById('categoryForm')?.addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submitCategoryButton');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menyimpan...';
+            submitBtn.disabled = true;
+        });
+
+        // Transaction form submission with loading state
+        document.getElementById('transactionForm')?.addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submitButton');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Menyimpan...';
+            submitBtn.disabled = true;
+            
+            // Allow form to submit normally
+            return true;
+        });
     </script>
 </body>
 </html>

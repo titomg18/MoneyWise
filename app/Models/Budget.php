@@ -33,6 +33,30 @@ class Budget extends Model
         return $this->belongsTo(User::class);
     }
 
+    // Relasi ke Transaction (BARU)
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'budget_id');
+    }
+
+    // Auto update spent_amount saat ada perubahan transaksi
+    protected static function booted()
+    {
+        static::updated(function ($budget) {
+            // Hitung ulang spent_amount dari transaksi yang terkait
+            $budget->updateSpentAmount();
+        });
+    }
+
+    // Method untuk update spent_amount
+    public function updateSpentAmount()
+    {
+        $this->spent_amount = $this->transactions()
+            ->where('transaction_type', 'expense')
+            ->sum('amount');
+        $this->saveQuietly(); // save tanpa trigger event
+    }
+
     public function getRemainingAttribute()
     {
         return $this->amount - $this->spent_amount;

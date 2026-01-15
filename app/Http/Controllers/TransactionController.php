@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use App\Models\Category;
+use App\Models\Budget;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,7 +17,7 @@ class TransactionController extends Controller
         
         // Query dasar
         $query = Transaction::where('user_id', $userId)
-            ->with('category')
+            ->with(['category', 'budget']) // Tambahkan eager loading untuk budget
             ->orderBy('transaction_date', 'desc')
             ->orderBy('created_at', 'desc');
         
@@ -86,6 +87,7 @@ class TransactionController extends Controller
             'transaction_date' => $transaction->transaction_date->format('Y-m-d'),
             'description' => $transaction->description,
             'category_id' => $transaction->category_id,
+            'budget_id' => $transaction->budget_id, // Tambahkan budget_id
             'amount' => $transaction->amount,
             'transaction_type' => $transaction->transaction_type
         ]);
@@ -96,6 +98,7 @@ class TransactionController extends Controller
     {
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,category_id',
+            'budget_id' => 'nullable|exists:budgets,id', // Validasi untuk budget_id
             'amount' => 'required|numeric|min:0',
             'transaction_type' => 'required|in:income,expense',
             'transaction_date' => 'required|date',
@@ -104,7 +107,16 @@ class TransactionController extends Controller
 
         $validated['user_id'] = Auth::id();
         
-        Transaction::create($validated);
+        $transaction = Transaction::create($validated);
+        
+        // Update spent_amount di budget jika transaksi expense dan ada budget_id
+        if ($transaction->transaction_type === 'expense' && $transaction->budget_id) {
+            $budget = Budget::find($transaction->budget_id);
+            if ($budget) {
+                $budget->spent_amount += $transaction->amount;
+                $budget->save();
+            }
+        }
         
         return redirect()->route('transactions.index')
             ->with('success', 'Transaksi berhasil ditambahkan!');
@@ -120,15 +132,38 @@ class TransactionController extends Controller
             return redirect()->back()->with('error', 'Unauthorized action.');
         }
         
+        $oldBudgetId = $transaction->budget_id;
+        $oldAmount = $transaction->amount;
+        $oldType = $transaction->transaction_type;
+        
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,category_id',
+            'budget_id' => 'nullable|exists:budgets,id',
             'amount' => 'required|numeric|min:0',
             'transaction_type' => 'required|in:income,expense',
             'transaction_date' => 'required|date',
             'description' => 'required|string|max:255'
         ]);
         
+        // Update budget lama jika perlu
+        if ($oldBudgetId && $oldType === 'expense') {
+            $oldBudget = Budget::find($oldBudgetId);
+            if ($oldBudget) {
+                $oldBudget->spent_amount -= $oldAmount;
+                $oldBudget->save();
+            }
+        }
+        
         $transaction->update($validated);
+        
+        // Update budget baru jika transaksi expense
+        if ($transaction->transaction_type === 'expense' && $transaction->budget_id) {
+            $newBudget = Budget::find($transaction->budget_id);
+            if ($newBudget) {
+                $newBudget->spent_amount += $transaction->amount;
+                $newBudget->save();
+            }
+        }
         
         return redirect()->route('transactions.index')
             ->with('success', 'Transaksi berhasil diperbarui!');
@@ -138,6 +173,9 @@ class TransactionController extends Controller
     public function destroy($id)
     {
         $transaction = Transaction::findOrFail($id);
+        $budgetId = $transaction->budget_id;
+        $transactionType = $transaction->transaction_type;
+        $amount = $transaction->amount;
         
         // Cek ownership
         if ($transaction->user_id !== Auth::id()) {
@@ -145,6 +183,15 @@ class TransactionController extends Controller
         }
         
         $transaction->delete();
+        
+        // Update budget jika transaksi expense dihapus
+        if ($transactionType === 'expense' && $budgetId) {
+            $budget = Budget::find($budgetId);
+            if ($budget) {
+                $budget->spent_amount -= $amount;
+                $budget->save();
+            }
+        }
         
         return redirect()->route('transactions.index')
             ->with('success', 'Transaksi berhasil dihapus!');
