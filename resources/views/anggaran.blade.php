@@ -54,7 +54,7 @@
                 <i class="fas fa-wallet"></i>
                 <span>Anggaran</span>
             </a>
-            <a href="#" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
+            <a href="{{ route('tabungan.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
                 <i class="fas fa-bullseye"></i>
                 <span>Target Tabungan</span>
             </a>
@@ -531,7 +531,7 @@
                         <i class="fas fa-wallet"></i>
                         <span class="text-sm lg:text-base">Anggaran</span>
                     </a>
-                    <a href="#" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
+                    <a href="{{ route('tabungan.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
                         <i class="fas fa-bullseye"></i>
                         <span class="text-sm lg:text-base">Target Tabungan</span>
                     </a>

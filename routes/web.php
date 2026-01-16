@@ -6,6 +6,7 @@ use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\BudgetController;
 use App\Http\Controllers\SavingsController;
+use App\Http\Controllers\LaporanController;
 
 // Halaman pertama (root) arahkan ke login
 Route::get('/', function () {
@@ -38,4 +39,8 @@ Route::middleware('auth')->group(function () {
     // Target Tabungan
     Route::resource('tabungan', SavingsController::class);
     Route::post('/tabungan/{tabungan}/add-savings', [SavingsController::class, 'addSavings'])->name('tabungan.addSavings');
+
+    // laporan
+    Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index')->middleware('auth');
+    Route::post('/laporan/export', [LaporanController::class, 'export'])->name('laporan.export')->middleware('auth');
 });
