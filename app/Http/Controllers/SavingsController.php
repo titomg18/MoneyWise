@@ -47,10 +47,10 @@ class SavingsController extends Controller
         return redirect()->back()->with('success', 'Target tabungan berhasil dibuat!');
     }
 
-    public function update(Request $request, Savings $savings)
+    public function update(Request $request, Savings $tabungan)
     {
         // Pastikan user hanya bisa mengupdate data miliknya
-        if ($savings->user_id !== auth()->id()) {
+        if ($tabungan->user_id !== auth()->id()) {
             abort(403);
         }
 
@@ -63,31 +63,31 @@ class SavingsController extends Controller
         ]);
 
         // Cek apakah target sudah tercapai
-        if (isset($validated['saved_amount']) && $validated['saved_amount'] >= $savings->target_amount) {
+        if (isset($validated['saved_amount']) && $validated['saved_amount'] >= $tabungan->target_amount) {
             $validated['status'] = 'completed';
         }
 
-        $savings->update($validated);
+        $tabungan->update($validated);
 
         return redirect()->back()->with('success', 'Target tabungan berhasil diperbarui!');
     }
 
-    public function destroy(Savings $savings)
+    public function destroy(Savings $tabungan)
     {
         // Pastikan user hanya bisa menghapus data miliknya
-        if ($savings->user_id !== auth()->id()) {
+        if ($tabungan->user_id !== auth()->id()) {
             abort(403);
         }
 
-        $savings->delete();
+        $tabungan->delete();
 
         return redirect()->back()->with('success', 'Target tabungan berhasil dihapus!');
     }
 
-    public function addSavings(Request $request, Savings $savings)
+    public function addSavings(Request $request, Savings $tabungan)
     {
         // Pastikan user hanya bisa menambah tabungan miliknya
-        if ($savings->user_id !== auth()->id()) {
+        if ($tabungan->user_id !== auth()->id()) {
             abort(403);
         }
 
@@ -95,16 +95,16 @@ class SavingsController extends Controller
             'amount' => 'required|numeric|min:0.01',
         ]);
 
-        $newAmount = $savings->saved_amount + $validated['amount'];
+        $newAmount = $tabungan->saved_amount + $validated['amount'];
         
         // Update status jika target tercapai
-        if ($newAmount >= $savings->target_amount) {
-            $savings->update([
+        if ($newAmount >= $tabungan->target_amount) {
+            $tabungan->update([
                 'saved_amount' => $newAmount,
                 'status' => 'completed',
             ]);
         } else {
-            $savings->update(['saved_amount' => $newAmount]);
+            $tabungan->update(['saved_amount' => $newAmount]);
         }
 
         return redirect()->back()->with('success', 'Tabungan berhasil ditambahkan!');
