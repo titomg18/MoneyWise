@@ -21,6 +21,42 @@
         .notification {
             transition: all 0.3s ease-in-out;
         }
+        /* Fix untuk modal scroll */
+        .modal-container {
+            max-height: 90vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        /* Custom scrollbar untuk modal */
+        .modal-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .modal-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        .modal-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        .modal-container::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Pastikan modal tetap di atas */
+        .modal-backdrop {
+            z-index: 999;
+        }
+        .modal-content {
+            z-index: 1000;
+        }
+        /* Loading animation */
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -46,7 +82,7 @@
                 <i class="fas fa-exchange-alt"></i>
                 <span>Transaksi</span>
             </a>
-            <a href="#" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
+            <a href="/analysis" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
                 <i class="fas fa-chart-pie"></i>
                 <span>Analisis</span>
             </a>
@@ -58,7 +94,7 @@
                 <i class="fas fa-bullseye"></i>
                 <span>Target Tabungan</span>
             </a>
-            <a href="#" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
+            <a href="{{ route('laporan.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
                 <i class="fas fa-file-invoice"></i>
                 <span>Laporan</span>
             </a>
@@ -295,200 +331,204 @@
         </footer>
     </div>
 
-    <!-- Modal Tambah Anggaran -->
-    <div id="modalTambahAnggaran" class="fixed inset-0 bg-gray-800 bg-opacity-50 z-30 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-md">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-lg font-bold text-gray-800">Tambah Anggaran Baru</h3>
-                    <button id="tutupModal" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                
-                <form id="formTambahAnggaran" method="POST" action="{{ route('budget.store') }}">
-                    @csrf
-                    <div class="space-y-4">
-                        <div>
-                            <label for="category_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Kategori *</label>
-                            <input type="text" id="category_name" name="category_name" 
-                                   class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                                   placeholder="Contoh: Makan & Minum, Transportasi" required>
-                            <p class="text-xs text-gray-500 mt-1">Nama kategori untuk anggaran Anda</p>
-                        </div>
-                        
-                        <div>
-                            <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Anggaran *</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500">Rp</span>
-                                </div>
-                                <input type="number" id="amount" name="amount" 
-                                       class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                                       placeholder="0" min="0" step="1000" required>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Jumlah anggaran untuk kategori ini</p>
-                        </div>
-                        
-                        <div>
-                            <label for="period" class="block text-sm font-medium text-gray-700 mb-1">Periode *</label>
-                            <select id="period" name="period" 
-                                    class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                                <option value="Bulanan" selected>Bulanan</option>
-                                <option value="Mingguan">Mingguan</option>
-                                <option value="Tahunan">Tahunan</option>
-                                <option value="Custom">Custom</option>
-                            </select>
-                            <p class="text-xs text-gray-500 mt-1">Periode anggaran</p>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Warna Kategori *</label>
-                            <div class="flex space-x-2">
-                                @php
-                                    $colors = [
-                                        ['id' => 'color-red', 'value' => '#EF4444', 'label' => 'Merah'],
-                                        ['id' => 'color-blue', 'value' => '#3B82F6', 'label' => 'Biru'],
-                                        ['id' => 'color-green', 'value' => '#10B981', 'label' => 'Hijau'],
-                                        ['id' => 'color-yellow', 'value' => '#F59E0B', 'label' => 'Kuning'],
-                                        ['id' => 'color-purple', 'value' => '#8B5CF6', 'label' => 'Ungu'],
-                                        ['id' => 'color-pink', 'value' => '#EC4899', 'label' => 'Pink'],
-                                    ];
-                                @endphp
-                                
-                                @foreach($colors as $color)
-                                <div class="flex flex-col items-center">
-                                    <input type="radio" id="{{ $color['id'] }}" name="color" value="{{ $color['value'] }}" 
-                                           class="hidden" {{ $loop->first ? 'checked' : '' }}>
-                                    <label for="{{ $color['id'] }}" 
-                                           class="w-8 h-8 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform"
-                                           style="background-color: {{ $color['value'] }}"
-                                           title="{{ $color['label'] }}"></label>
-                                </div>
-                                @endforeach
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Pilih warna untuk kategori ini</p>
-                        </div>
-                        
-                        <div>
-                            <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi (Opsional)</label>
-                            <textarea id="description" name="description" 
-                                      class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                                      rows="3" placeholder="Tambahkan catatan untuk anggaran ini"></textarea>
-                            <p class="text-xs text-gray-500 mt-1">Deskripsi atau catatan tambahan</p>
-                        </div>
+    <!-- Modal Tambah Anggaran - FIXED FOR SCROLL -->
+    <div id="modalTambahAnggaran" class="modal-backdrop fixed inset-0 bg-gray-800 bg-opacity-50 z-30 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="modal-content bg-white rounded-2xl w-full max-w-md modal-container">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold text-gray-800">Tambah Anggaran Baru</h3>
+                        <button id="tutupModal" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                     
-                    <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                        <button type="button" id="batalTambah" 
-                                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
-                            Batal
-                        </button>
-                        <button type="submit" id="submitButton"
-                                class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all flex items-center">
-                            <i class="fas fa-save mr-2"></i>
-                            <span>Simpan Anggaran</span>
-                        </button>
-                    </div>
-                </form>
+                    <form id="formTambahAnggaran" method="POST" action="{{ route('budget.store') }}">
+                        @csrf
+                        <div class="space-y-4">
+                            <div>
+                                <label for="category_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Kategori *</label>
+                                <input type="text" id="category_name" name="category_name" 
+                                       class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                       placeholder="Contoh: Makan & Minum, Transportasi" required>
+                                <p class="text-xs text-gray-500 mt-1">Nama kategori untuk anggaran Anda</p>
+                            </div>
+                            
+                            <div>
+                                <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Anggaran *</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500">Rp</span>
+                                    </div>
+                                    <input type="number" id="amount" name="amount" 
+                                           class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                           placeholder="0" min="0" step="1000" required>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Jumlah anggaran untuk kategori ini</p>
+                            </div>
+                            
+                            <div>
+                                <label for="period" class="block text-sm font-medium text-gray-700 mb-1">Periode *</label>
+                                <select id="period" name="period" 
+                                        class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                    <option value="Bulanan" selected>Bulanan</option>
+                                    <option value="Mingguan">Mingguan</option>
+                                    <option value="Tahunan">Tahunan</option>
+                                    <option value="Custom">Custom</option>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">Periode anggaran</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Warna Kategori *</label>
+                                <div class="flex space-x-2 flex-wrap">
+                                    @php
+                                        $colors = [
+                                            ['id' => 'color-red', 'value' => '#EF4444', 'label' => 'Merah'],
+                                            ['id' => 'color-blue', 'value' => '#3B82F6', 'label' => 'Biru'],
+                                            ['id' => 'color-green', 'value' => '#10B981', 'label' => 'Hijau'],
+                                            ['id' => 'color-yellow', 'value' => '#F59E0B', 'label' => 'Kuning'],
+                                            ['id' => 'color-purple', 'value' => '#8B5CF6', 'label' => 'Ungu'],
+                                            ['id' => 'color-pink', 'value' => '#EC4899', 'label' => 'Pink'],
+                                        ];
+                                    @endphp
+                                    
+                                    @foreach($colors as $color)
+                                    <div class="flex flex-col items-center mb-2">
+                                        <input type="radio" id="{{ $color['id'] }}" name="color" value="{{ $color['value'] }}" 
+                                               class="hidden" {{ $loop->first ? 'checked' : '' }}>
+                                        <label for="{{ $color['id'] }}" 
+                                               class="w-8 h-8 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform"
+                                               style="background-color: {{ $color['value'] }}"
+                                               title="{{ $color['label'] }}"></label>
+                                    </div>
+                                    @endforeach
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Pilih warna untuk kategori ini</p>
+                            </div>
+                            
+                            <div>
+                                <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi (Opsional)</label>
+                                <textarea id="description" name="description" 
+                                          class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                          rows="3" placeholder="Tambahkan catatan untuk anggaran ini"></textarea>
+                                <p class="text-xs text-gray-500 mt-1">Deskripsi atau catatan tambahan</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                            <button type="button" id="batalTambah" 
+                                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+                                Batal
+                            </button>
+                            <button type="submit" id="submitButton"
+                                    class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all flex items-center">
+                                <i class="fas fa-save mr-2"></i>
+                                <span>Simpan Anggaran</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Edit Anggaran -->
-    <div id="modalEditAnggaran" class="fixed inset-0 bg-gray-800 bg-opacity-50 z-30 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl w-full max-w-md">
-            <div class="p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-lg font-bold text-gray-800">Edit Anggaran</h3>
-                    <button id="tutupModalEdit" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                
-                <form id="formEditAnggaran" method="POST">
-                    @csrf
-                    @method('PUT')
-                    <input type="hidden" id="edit_budget_id" name="id">
-                    <div class="space-y-4">
-                        <div>
-                            <label for="edit_category_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Kategori *</label>
-                            <input type="text" id="edit_category_name" name="category_name" 
-                                   class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                                   placeholder="Contoh: Makan & Minum, Transportasi" required>
-                            <p class="text-xs text-gray-500 mt-1">Nama kategori untuk anggaran Anda</p>
-                        </div>
-                        
-                        <div>
-                            <label for="edit_amount" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Anggaran *</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <span class="text-gray-500">Rp</span>
-                                </div>
-                                <input type="number" id="edit_amount" name="amount" 
-                                       class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                                       placeholder="0" min="0" step="1000" required>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Jumlah anggaran untuk kategori ini</p>
-                        </div>
-                        
-                        <div>
-                            <label for="edit_period" class="block text-sm font-medium text-gray-700 mb-1">Periode *</label>
-                            <select id="edit_period" name="period" 
-                                    class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
-                                <option value="Bulanan">Bulanan</option>
-                                <option value="Mingguan">Mingguan</option>
-                                <option value="Tahunan">Tahunan</option>
-                                <option value="Custom">Custom</option>
-                            </select>
-                            <p class="text-xs text-gray-500 mt-1">Periode anggaran</p>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Warna Kategori *</label>
-                            <div class="flex space-x-2">
-                                @foreach($colors as $color)
-                                <div class="flex flex-col items-center">
-                                    <input type="radio" id="edit_color_{{ $color['id'] }}" name="color" value="{{ $color['value'] }}" 
-                                           class="hidden">
-                                    <label for="edit_color_{{ $color['id'] }}" 
-                                           class="w-8 h-8 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform"
-                                           style="background-color: {{ $color['value'] }}"
-                                           title="{{ $color['label'] }}"></label>
-                                </div>
-                                @endforeach
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">Pilih warna untuk kategori ini</p>
-                        </div>
-                        
-                        <div>
-                            <label for="edit_description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi (Opsional)</label>
-                            <textarea id="edit_description" name="description" 
-                                      class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                                      rows="3" placeholder="Tambahkan catatan untuk anggaran ini"></textarea>
-                            <p class="text-xs text-gray-500 mt-1">Deskripsi atau catatan tambahan</p>
-                        </div>
+    <!-- Modal Edit Anggaran - FIXED FOR SCROLL -->
+    <div id="modalEditAnggaran" class="modal-backdrop fixed inset-0 bg-gray-800 bg-opacity-50 z-30 hidden overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="modal-content bg-white rounded-2xl w-full max-w-md modal-container">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-bold text-gray-800">Edit Anggaran</h3>
+                        <button id="tutupModalEdit" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
                     
-                    <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
-                        <button type="button" id="batalEdit" 
-                                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
-                            Batal
-                        </button>
-                        <button type="submit" id="submitEditButton"
-                                class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all flex items-center">
-                            <i class="fas fa-save mr-2"></i>
-                            <span>Update Anggaran</span>
-                        </button>
-                    </div>
-                </form>
+                    <form id="formEditAnggaran" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <input type="hidden" id="edit_budget_id" name="id">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="edit_category_name" class="block text-sm font-medium text-gray-700 mb-1">Nama Kategori *</label>
+                                <input type="text" id="edit_category_name" name="category_name" 
+                                       class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                       placeholder="Contoh: Makan & Minum, Transportasi" required>
+                                <p class="text-xs text-gray-500 mt-1">Nama kategori untuk anggaran Anda</p>
+                            </div>
+                            
+                            <div>
+                                <label for="edit_amount" class="block text-sm font-medium text-gray-700 mb-1">Jumlah Anggaran *</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500">Rp</span>
+                                    </div>
+                                    <input type="number" id="edit_amount" name="amount" 
+                                           class="w-full border border-gray-300 rounded-xl pl-10 pr-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                           placeholder="0" min="0" step="1000" required>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Jumlah anggaran untuk kategori ini</p>
+                            </div>
+                            
+                            <div>
+                                <label for="edit_period" class="block text-sm font-medium text-gray-700 mb-1">Periode *</label>
+                                <select id="edit_period" name="period" 
+                                        class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                    <option value="Bulanan">Bulanan</option>
+                                    <option value="Mingguan">Mingguan</option>
+                                    <option value="Tahunan">Tahunan</option>
+                                    <option value="Custom">Custom</option>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">Periode anggaran</p>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Warna Kategori *</label>
+                                <div class="flex space-x-2 flex-wrap">
+                                    @foreach($colors as $color)
+                                    <div class="flex flex-col items-center mb-2">
+                                        <input type="radio" id="edit_color_{{ $color['id'] }}" name="color" value="{{ $color['value'] }}" 
+                                               class="hidden">
+                                        <label for="edit_color_{{ $color['id'] }}" 
+                                               class="w-8 h-8 rounded-full border-2 border-white shadow-sm cursor-pointer hover:scale-110 transition-transform"
+                                               style="background-color: {{ $color['value'] }}"
+                                               title="{{ $color['label'] }}"></label>
+                                    </div>
+                                    @endforeach
+                                </div>
+                                <p class="text-xs text-gray-500 mt-1">Pilih warna untuk kategori ini</p>
+                            </div>
+                            
+                            <div>
+                                <label for="edit_description" class="block text-sm font-medium text-gray-700 mb-1">Deskripsi (Opsional)</label>
+                                <textarea id="edit_description" name="description" 
+                                          class="w-full border border-gray-300 rounded-xl px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                          rows="3" placeholder="Tambahkan catatan untuk anggaran ini"></textarea>
+                                <p class="text-xs text-gray-500 mt-1">Deskripsi atau catatan tambahan</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+                            <button type="button" id="batalEdit" 
+                                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors">
+                                Batal
+                            </button>
+                            <button type="submit" id="submitEditButton"
+                                    class="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all flex items-center">
+                                <i class="fas fa-save mr-2"></i>
+                                <span>Update Anggaran</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Mobile Menu (Hidden by default) -->
     <div id="mobileMenu" class="lg:hidden fixed inset-0 bg-gray-800 bg-opacity-50 z-20 hidden">
-        <div class="absolute right-0 top-0 h-full w-64 bg-gradient-to-b from-blue-800 to-indigo-900 text-white shadow-xl">
+        <div class="absolute right-0 top-0 h-full w-64 bg-gradient-to-b from-blue-800 to-indigo-900 text-white shadow-xl overflow-y-auto">
             <div class="p-4 lg:p-6">
                 <div class="flex items-center justify-between mb-6 lg:mb-8">
                     <div class="flex items-center space-x-3">
@@ -523,7 +563,7 @@
                         <i class="fas fa-exchange-alt"></i>
                         <span class="text-sm lg:text-base">Transaksi</span>
                     </a>
-                    <a href="#" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
+                    <a href="/analysis" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
                         <i class="fas fa-chart-pie"></i>
                         <span class="text-sm lg:text-base">Analisis</span>
                     </a>
@@ -535,7 +575,7 @@
                         <i class="fas fa-bullseye"></i>
                         <span class="text-sm lg:text-base">Target Tabungan</span>
                     </a>
-                    <a href="#" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
+                    <a href="{{ route('laporan.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
                         <i class="fas fa-file-invoice"></i>
                         <span class="text-sm lg:text-base">Laporan</span>
                     </a>
@@ -546,7 +586,7 @@
                 </nav>
 
                 <!-- Logout Button -->
-                <div class="absolute bottom-4 lg:bottom-6 left-4 lg:left-6 right-4 lg:right-6">
+                <div class="mt-8 pt-6 border-t border-white/10">
                     <form method="POST" action="/logout">
                         @csrf
                         <button type="submit" class="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors">
@@ -958,6 +998,9 @@
                 // Tampilkan modal edit
                 document.getElementById('modalEditAnggaran').classList.remove('hidden');
                 
+                // Prevent body scroll
+                document.body.style.overflow = 'hidden';
+                
             } catch (error) {
                 console.error('Error:', error);
                 showNotification('Gagal memuat data anggaran untuk diedit', 'error');
@@ -995,6 +1038,7 @@
                     
                     // Tutup modal edit
                     document.getElementById('modalEditAnggaran').classList.add('hidden');
+                    document.body.style.overflow = 'auto';
                     
                     // Refresh data
                     setTimeout(() => {
@@ -1050,6 +1094,7 @@
                     document.getElementById('formTambahAnggaran').reset();
                     document.getElementById('color-red').checked = true;
                     modalTambahAnggaran.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
                     
                     // Refresh data
                     setTimeout(() => {
@@ -1166,17 +1211,26 @@
         // Mobile menu toggle
         document.getElementById('mobileMenuButton')?.addEventListener('click', () => {
             mobileMenu.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
         });
 
         document.getElementById('closeMobileMenu')?.addEventListener('click', () => {
             mobileMenu.classList.add('hidden');
+            document.body.style.overflow = 'auto';
         });
 
         mobileMenu?.addEventListener('click', (e) => {
             if (e.target.id === 'mobileMenu') {
                 mobileMenu.classList.add('hidden');
+                document.body.style.overflow = 'auto';
             }
         });
+
+        // Fungsi untuk membuka modal tambah
+        function openTambahModal() {
+            modalTambahAnggaran.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
 
         // Modal tambah anggaran - semua tombol pembuka modal
         const semuaTombolTambah = [
@@ -1186,39 +1240,43 @@
         ];
         
         semuaTombolTambah.forEach(buttonId => {
-            document.getElementById(buttonId)?.addEventListener('click', () => {
-                modalTambahAnggaran.classList.remove('hidden');
-            });
+            document.getElementById(buttonId)?.addEventListener('click', openTambahModal);
         });
 
         // Modal tutup dan batal - Tambah
         document.getElementById('tutupModal')?.addEventListener('click', () => {
             modalTambahAnggaran.classList.add('hidden');
+            document.body.style.overflow = 'auto';
         });
 
         document.getElementById('batalTambah')?.addEventListener('click', () => {
             modalTambahAnggaran.classList.add('hidden');
+            document.body.style.overflow = 'auto';
         });
 
         // Modal tutup dan batal - Edit
         document.getElementById('tutupModalEdit')?.addEventListener('click', () => {
             modalEditAnggaran.classList.add('hidden');
+            document.body.style.overflow = 'auto';
         });
 
         document.getElementById('batalEdit')?.addEventListener('click', () => {
             modalEditAnggaran.classList.add('hidden');
+            document.body.style.overflow = 'auto';
         });
 
         // Tutup modal saat klik di luar
         modalTambahAnggaran?.addEventListener('click', (e) => {
             if (e.target.id === 'modalTambahAnggaran') {
                 modalTambahAnggaran.classList.add('hidden');
+                document.body.style.overflow = 'auto';
             }
         });
 
         modalEditAnggaran?.addEventListener('click', (e) => {
             if (e.target.id === 'modalEditAnggaran') {
                 modalEditAnggaran.classList.add('hidden');
+                document.body.style.overflow = 'auto';
             }
         });
 
@@ -1267,6 +1325,26 @@
             ];
             const now = new Date();
             currentMonth = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
+            
+            // Tambahkan event listener untuk mencegah scrolling pada modal
+            const modals = [modalTambahAnggaran, modalEditAnggaran];
+            modals.forEach(modal => {
+                modal?.addEventListener('wheel', (e) => {
+                    if (e.target.closest('.modal-container')) {
+                        // Izinkan scrolling pada konten modal
+                        return;
+                    }
+                    e.preventDefault();
+                });
+                
+                modal?.addEventListener('touchmove', (e) => {
+                    if (e.target.closest('.modal-container')) {
+                        // Izinkan touch move pada konten modal
+                        return;
+                    }
+                    e.preventDefault();
+                });
+            });
         });
 
         // ============================================
@@ -1276,6 +1354,33 @@
         setInterval(() => {
             loadBudgets();
         }, 30000);
+
+        // ============================================
+        // KEYBOARD SHORTCUTS
+        // ============================================
+        document.addEventListener('keydown', function(e) {
+            // Escape untuk menutup modal
+            if (e.key === 'Escape') {
+                if (!modalTambahAnggaran.classList.contains('hidden')) {
+                    modalTambahAnggaran.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                }
+                if (!modalEditAnggaran.classList.contains('hidden')) {
+                    modalEditAnggaran.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                }
+                if (!mobileMenu.classList.contains('hidden')) {
+                    mobileMenu.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                }
+            }
+            
+            // Ctrl/Cmd + N untuk tambah anggaran baru
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                openTambahModal();
+            }
+        });
     </script>
 </body>
 </html>

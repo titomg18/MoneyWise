@@ -78,7 +78,7 @@
                 <i class="fas fa-exchange-alt"></i>
                 <span>Transaksi</span>
             </a>
-            <a href="/analisis" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
+            <a href="/analysis" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
                 <i class="fas fa-chart-pie"></i>
                 <span>Analisis</span>
             </a>
@@ -628,7 +628,7 @@
                         <i class="fas fa-exchange-alt"></i>
                         <span class="text-sm">Transaksi</span>
                     </a>
-                    <a href="/analisis" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
+                    <a href="/analysis" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
                         <i class="fas fa-chart-pie"></i>
                         <span class="text-sm">Analisis</span>
                     </a>

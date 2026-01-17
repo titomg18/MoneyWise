@@ -81,7 +81,7 @@
                 <i class="fas fa-exchange-alt"></i>
                 <span class="font-medium">Transaksi</span>
             </a>
-            <a href="#" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
+            <a href="/analysis" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
                 <i class="fas fa-chart-pie"></i>
                 <span>Analisis</span>
             </a>
@@ -93,7 +93,7 @@
                 <i class="fas fa-bullseye"></i>
                 <span>Target Tabungan</span>
             </a>
-            <a href="#" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
+            <a href="{{ route('laporan.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
                 <i class="fas fa-file-invoice"></i>
                 <span>Laporan</span>
             </a>
@@ -503,7 +503,7 @@
                             <i class="fas fa-exchange-alt"></i>
                             <span class="font-medium text-sm lg:text-base">Transaksi</span>
                         </a>
-                        <a href="#" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
+                        <a href="/analysis" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
                             <i class="fas fa-chart-pie"></i>
                             <span class="text-sm lg:text-base">Analisis</span>
                         </a>
@@ -515,7 +515,7 @@
                             <i class="fas fa-bullseye"></i>
                             <span class="text-sm lg:text-base">Target Tabungan</span>
                         </a>
-                        <a href="#" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
+                        <a href="{{ route('laporan.index') }}" class="flex items-center space-x-3 px-4 py-3 hover:bg-white/5 rounded-xl transition-colors">
                             <i class="fas fa-file-invoice"></i>
                             <span class="text-sm lg:text-base">Laporan</span>
                         </a>
